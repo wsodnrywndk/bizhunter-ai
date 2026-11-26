@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d1117">
+<title>BIZHUNTER AI — поиск клиентов и AI-коммерческие предложения</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+
+<!-- ===================== AUTH ===================== -->
+<section id="auth-view" class="auth-screen hidden">
+  <div class="auth-card">
+    <h1 class="logo">BIZ<span>HUNTER</span> AI</h1>
+    <p class="auth-sub">Находите компании без сайта и получайте клиентов</p>
+
+    <div class="tabs">
+      <button class="tab active" data-auth-tab="login">Вход</button>
+      <button class="tab" data-auth-tab="signup">Регистрация</button>
+    </div>
+
+    <form id="login-form" class="auth-form">
+      <input type="email" id="login-email" placeholder="Email" required autocomplete="email">
+      <input type="password" id="login-password" placeholder="Пароль" required autocomplete="current-password">
+      <button type="submit" class="btn btn-primary btn-block">Войти</button>
+      <button type="button" class="btn btn-link" id="forgot-btn">Забыли пароль?</button>
+    </form>
+
+    <form id="signup-form" class="auth-form hidden">
+      <input type="email" id="signup-email" placeholder="Email" required autocomplete="email">
+      <input type="password" id="signup-password" placeholder="Пароль (мин. 6 символов)" required minlength="6" autocomplete="new-password">
+      <button type="submit" class="btn btn-primary btn-block">Создать аккаунт</button>
+    </form>
+
+    <form id="reset-form" class="auth-form hidden">
+      <input type="email" id="reset-email" placeholder="Email" required>
+      <button type="submit" class="btn btn-primary btn-block">Отправить ссылку сброса</button>
+      <button type="button" class="btn btn-link" id="reset-back">← Назад ко входу</button>
+    </form>
+
+    <div id="auth-message" class="form-message hidden"></div>
+  </div>
+</section>
+
+<!-- ===================== APP ===================== -->
+<div id="app" class="hidden">
+
+  <header class="topbar">
+    <span class="logo small">BIZ<span>HUNTER</span> AI</span>
+    <div class="topbar-right">
+      <span id="plan-badge" class="plan-badge">Free</span>
+      <button id="logout-btn" class="btn btn-ghost btn-sm">Выйти</button>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <!-- Поиск компаний -->
+    <section id="view-finder" class="view">
+      <h2>Поиск компаний</h2>
+      <form id="finder-form" class="card">
+        <div class="field-row">
+          <label>Город
+            <input type="text" id="finder-city" placeholder="Москва" required>
+          </label>
+          <label>Категория
+            <input type="text" id="finder-category" placeholder="Салон красоты" required>
+          </label>
+        </div>
+        <label class="checkbox">
+          <input type="checkbox" id="finder-nosite" checked>
+          Только компании без сайта
+        </label>
+        <button type="submit" class="btn btn-primary btn-block">Найти</button>
+        <div class="limit-hint" id="finder-limit"></div>
+      </form>
+
+      <div class="search-row hidden" id="finder-search-row">
+        <input type="text" id="finder-filter" placeholder="Фильтр по названию, адресу…">
+      </div>
+      <div id="finder-results" class="results"></div>
+    </section>
+
+    <!-- CRM -->
+    <section id="view-crm" class="view hidden">
+      <div class="view-head">
+        <h2>Мои клиенты</h2>
+        <div class="crm-tools">
+          <input type="text" id="crm-filter" placeholder="Поиск…">
+          <select id="crm-status-filter">
+            <option value="">Все статусы</option>
+            <option value="new">Новый</option>
+            <option value="analyzed">Проанализирован</option>
+            <option value="proposal_ready">Предложение подготовлено</option>
+            <option value="sent">Отправлено</option>
+            <option value="negotiation">Переговоры</option>
+            <option value="client">Клиент</option>
+          </select>
+          <button id="crm-export" class="btn btn-ghost btn-sm">Экспорт CSV</button>
+        </div>
+      </div>
+      <div id="crm-list" class="results"></div>
+    </section>
+
+    <!-- Карточка компании -->
+    <section id="view-company" class="view hidden">
+      <button class="btn btn-link" id="company-back">← Назад</button>
+      <div id="company-detail"></div>
+
+      <div class="card">
+        <h3>AI-анализ бизнеса</h3>
+        <button id="btn-analyze" class="btn btn-primary">Проанализировать</button>
+        <div id="analysis-result"></div>
+      </div>
+
+      <div class="card">
+        <h3>Генератор демо-сайта</h3>
+        <div class="field-row">
+          <label>Ниша
+            <select id="gen-template">
+              <option value="universal">Универсальный</option>
+              <option value="beauty">Красота и здоровье</option>
+              <option value="food">Кафе и еда</option>
+              <option value="services">Услуги</option>
+              <option value="trade">Торговля</option>
+            </select>
+          </label>
+        </div>
+        <button id="btn-generate" class="btn btn-primary">Сгенерировать демо-сайт</button>
+        <div id="website-preview"></div>
+      </div>
+
+      <div class="card">
+        <h3>Коммерческое предложение</h3>
+        <div class="field-row">
+          <label>Канал
+            <select id="proposal-channel">
+              <option value="telegram">Telegram</option>
+              <option value="email">Email</option>
+              <option value="whatsapp">WhatsApp</option>
+            </select>
+          </label>
+          <label>Стиль
+            <select id="proposal-style">
+              <option value="friendly">Дружелюбный</option>
+              <option value="formal">Формальный</option>
+              <option value="bold">Напористый</option>
+            </select>
+          </label>
+        </div>
+        <button id="btn-proposal" class="btn btn-primary">Создать предложение</button>
+        <div id="proposal-result"></div>
+      </div>
+    </section>
+
+    <!-- Профиль и лимиты -->
+    <section id="view-profile" class="view hidden">
+      <h2>Профиль</h2>
+      <div class="card">
+        <div id="profile-email"></div>
+        <h3>Тариф: <span id="profile-plan">Free</span></h3>
+        <div id="usage-bars"></div>
+      </div>
+      <div class="card">
+        <h3>Тарифы</h3>
+        <div class="plans">
+          <div class="plan" data-plan="free">
+            <b>Free</b><span>10 поисков / мес</span><em>0 ₽</em>
+          </div>
+          <div class="plan" data-plan="starter">
+            <b>Starter</b><span>100 поисков / мес</span><em>490 ₽/мес</em>
+          </div>
+          <div class="plan" data-plan="pro">
+            <b>Pro</b><span>500 поисков / мес</span><em>1 490 ₽/мес</em>
+          </div>
+          <div class="plan" data-plan="business">
+            <b>Business</b><span>Без лимита поисков</span><em>3 990 ₽/мес</em>
+          </div>
+        </div>
+        <p class="hint">Подключение оплаты появится после проверки MVP. Смена тарифа — кнопкой ниже (учёт лимитов работает сразу).</p>
+        <div class="field-row">
+          <select id="plan-select">
+            <option value="free">Free</option>
+            <option value="starter">Starter</option>
+            <option value="pro">Pro</option>
+            <option value="business">Business</option>
+          </select>
+          <button id="plan-save" class="btn btn-primary">Сменить тариф</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Мобильная навигация -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-view="finder">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      Поиск
+    </button>
+    <button class="nav-btn" data-view="crm">
+      <svg viewBox="0 0 24 24"><path d="M3 3h18v4H3zM3 10h18v11H3z"/></svg>
+      CRM
+    </button>
+    <button class="nav-btn" data-view="profile">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4.5-6 8-6s7 2 8 6"/></svg>
+      Профиль
+    </button>
+  </nav>
+
+  <!-- Модальное подтверждение отправки -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-card">
+      <h3 id="modal-title"></h3>
+      <p id="modal-text"></p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="modal-cancel">Отмена</button>
+        <button class="btn btn-primary" id="modal-ok">Подтвердить</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
