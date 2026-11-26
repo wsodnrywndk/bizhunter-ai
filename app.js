@@ -6,7 +6,7 @@
 // ==== КОНФИГУРАЦИЯ ====
 // Замените на свои значения из Supabase Dashboard → Settings → API
 const SUPABASE_URL = 'https://yozmyovwakgvwwmmfali.supabase.co;
-const SUPABASE_ANON_KEY = 'sb_publishable_LGtn20gGIuBT0M30uYYmtw_JCkyVKDk;
+const SUPABASE_ANON_KEY = 'sb_publishable_LGtn20gGIuBT0M30uYYmtw_JCkyVKDk';
 
 const PLANS = {
   free:     { label: 'Free',     searches: 10,  analyses: 3,   generations: 1,   proposals: 3   },
